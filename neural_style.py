@@ -6,6 +6,7 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 
 from PIL import Image
+import CaffeLoader
 from CaffeLoader import loadCaffemodel, ModelParallel
 
 import argparse
@@ -16,6 +17,7 @@ parser.add_argument("-style_blend_weights", default=None)
 parser.add_argument("-content_image", help="Content target image", default='examples/inputs/tubingen.jpg')
 parser.add_argument("-image_size", help="Maximum height / width of generated image", type=int, default=512)
 parser.add_argument("-gpu", help="Zero-indexed ID of the GPU to use; for CPU mode set -gpu = c", default=0)
+parser.add_argument("-verbose", default=False)
 
 # Optimization options
 parser.add_argument("-content_weight", type=float, default=5e0)
@@ -53,6 +55,8 @@ params = parser.parse_args()
 
 
 Image.MAX_IMAGE_PIXELS = 1000000000 # Support gigapixel images
+
+CaffeLoader.verbose = params.verbose
 
 
 def main():
@@ -121,13 +125,15 @@ def main():
                 net.add_module(str(len(net)), layer)
 
                 if layerList['C'][c] in content_layers:
-                    print("Setting up content layer " + str(i) + ": " + str(layerList['C'][c]))
+                    if params.verbose:
+                        print("Setting up content layer " + str(i) + ": " + str(layerList['C'][c]))
                     loss_module = ContentLoss(params.content_weight, params.normalize_gradients)
                     net.add_module(str(len(net)), loss_module)
                     content_losses.append(loss_module)
 
                 if layerList['C'][c] in style_layers:
-                    print("Setting up style layer " + str(i) + ": " + str(layerList['C'][c]))
+                    if params.verbose:
+                        print("Setting up style layer " + str(i) + ": " + str(layerList['C'][c]))
                     loss_module = StyleLoss(params.style_weight, params.normalize_gradients)
                     net.add_module(str(len(net)), loss_module)
                     style_losses.append(loss_module)
@@ -137,14 +143,16 @@ def main():
                 net.add_module(str(len(net)), layer)
 
                 if layerList['R'][r] in content_layers:
-                    print("Setting up content layer " + str(i) + ": " + str(layerList['R'][r]))
+                    if params.verbose:
+                        print("Setting up content layer " + str(i) + ": " + str(layerList['R'][r]))
                     loss_module = ContentLoss(params.content_weight, params.normalize_gradients)
                     net.add_module(str(len(net)), loss_module)
                     content_losses.append(loss_module)
                     next_content_idx += 1
 
                 if layerList['R'][r] in style_layers:
-                    print("Setting up style layer " + str(i) + ": " + str(layerList['R'][r]))
+                    if params.verbose:
+                        print("Setting up style layer " + str(i) + ": " + str(layerList['R'][r]))
                     loss_module = StyleLoss(params.style_weight, params.normalize_gradients)
                     net.add_module(str(len(net)), loss_module)
                     style_losses.append(loss_module)
@@ -160,8 +168,9 @@ def main():
     # Capture content targets
     for i in content_losses:
         i.mode = 'capture'
-    print("Capturing content targets")
-    print_torch(net, multidevice)
+    if params.verbose:
+        print("Capturing content targets")
+        print_torch(net, multidevice)
     net(content_image)
 
     # Capture style targets
@@ -169,7 +178,8 @@ def main():
         i.mode = 'None'
 
     for i, image in enumerate(style_images_caffe):
-        print("Capturing style target " + str(i+1))
+        if params.verbose:
+            print("Capturing style target " + str(i+1))
         for j in style_losses:
             j.mode = 'capture'
             j.blend_weight = style_blend_weights[i]
@@ -208,11 +218,12 @@ def main():
     def maybe_print(t, loss):
         if params.print_iter > 0 and t % params.print_iter == 0:
             print("Iteration " + str(t) + " / "+ str(params.num_iterations))
-            for i, loss_module in enumerate(content_losses):
-                print("  Content " + str(i+1) + " loss: " + str(loss_module.loss.item()))
-            for i, loss_module in enumerate(style_losses):
-                print("  Style " + str(i+1) + " loss: " + str(loss_module.loss.item()))
-            print("  Total loss: " + str(loss.item()))
+            if params.verbose:
+                for i, loss_module in enumerate(content_losses):
+                    print("  Content " + str(i+1) + " loss: " + str(loss_module.loss.item()))
+                for i, loss_module in enumerate(style_losses):
+                    print("  Style " + str(i+1) + " loss: " + str(loss_module.loss.item()))
+                print("  Total loss: " + str(loss.item()))
 
     def maybe_save(t):
         should_save = params.save_iter > 0 and t % params.save_iter == 0

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+verbose = False
+
 
 class VGG(nn.Module):
     def __init__(self, features, num_classes=1000):
@@ -242,13 +244,15 @@ def loadCaffemodel(model_file, pooling, use_gpu, disable_check):
     cnn, layerList = modelSelector(str(model_file).lower(), pooling)
 
     cnn.load_state_dict(torch.load(model_file), strict=(not disable_check))
-    print("Successfully loaded " + str(model_file))
+    if verbose: 
+        print("Successfully loaded " + str(model_file))
 
     # Maybe convert the model to cuda now, to avoid later issues
     if "c" not in str(use_gpu).lower() or "c" not in str(use_gpu[0]).lower():
         cnn = cnn.cuda()
     cnn = cnn.features
-
-    print_loadcaffe(cnn, layerList)
+    
+    if verbose:
+        print_loadcaffe(cnn, layerList)
 
     return cnn, layerList
