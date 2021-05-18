@@ -5,8 +5,19 @@ input_dir = "input"
 output_dir = "output"
 init = "image"
 
+content_image = None
+style_image = None
+cw = 1
+sw = 800
+ss = 0.5
+tvw = 0
+image_size = 1000
+preserve_colors = False
+num_iters = 2000
+save_progress = True
 
-def format_command(content_image, style_image, cw, sw, tvw, ss, image_size, preserve_colors, num_iters, save_progress):
+
+def to_string():
     
     ci = Path(input_dir, content_image)
     si = [Path(input_dir, s) for s in style_image.split(",")]
@@ -34,4 +45,4 @@ if __name__ == "__main__":
     preserve_content_colors = False
     num_iterations = 2000
     save_progress = True
-    print(format_command(content_image, style_image, content_weight, style_weight, tv_weight, style_scale, image_size, preserve_content_colors, num_iterations, save_progress))
+    print(to_string())
