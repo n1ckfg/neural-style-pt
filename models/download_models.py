@@ -23,9 +23,9 @@ torch.save(sd, path.join("models", "vgg16-00b39a1b.pth"))
 print("Downloading the NIN model")
 if version_info[0] < 3:
     import urllib
-    urllib.URLopener().retrieve("https://raw.githubusercontent.com/ProGamerGov/pytorch-nin/master/nin_imagenet.pth", path.join("models", "nin_imagenet.pth"))
+    urllib.URLopener().retrieve("https://raw.githubusercontent.com/ebranda/pytorch-nin/master/nin_imagenet.pth", path.join("models", "nin_imagenet.pth"))
 else: 
     import urllib.request
-    urllib.request.urlretrieve("https://raw.githubusercontent.com/ProGamerGov/pytorch-nin/master/nin_imagenet.pth", path.join("models", "nin_imagenet.pth"))
+    urllib.request.urlretrieve("https://raw.githubusercontent.com/ebranda/pytorch-nin/master/nin_imagenet.pth", path.join("models", "nin_imagenet.pth"))
 
 print("All models have been successfully downloaded")
